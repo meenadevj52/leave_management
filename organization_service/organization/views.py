@@ -1,6 +1,6 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated ,BasePermission
 from rest_framework import exceptions
 from .models import Organization
 from .serializers import OrganizationSerializer
@@ -8,15 +8,19 @@ from .pagination import OrganizationPagination
 from .authentication import AuthServiceTokenAuthentication
 
 
-class IsAdminPermission:
-    def has_permission(self, request, view):
+class IsAdminPermission(BasePermission):
+    def _is_allowed(self, request):
         if request.method in ['GET', 'HEAD', 'OPTIONS']:
             return True
+        return hasattr(request.user, 'role') and request.user.role == 'Admin'
 
-        if hasattr(request.user, 'role') and request.user.role == 'Admin':
+    def has_permission(self, request, view):
+        if self._is_allowed(request):
             return True
-
         raise exceptions.PermissionDenied("Only Admins can perform this action.")
+
+    def has_object_permission(self, request, view, obj):
+        return self._is_allowed(request)
 
 
 class OrganizationViewSet(viewsets.ModelViewSet):
@@ -29,7 +33,7 @@ class OrganizationViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        organization = serializer.save(created_by=request.user.id)
+        organization = serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
@@ -37,7 +41,7 @@ class OrganizationViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
-        serializer.save(updated_by=request.user.id)
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):

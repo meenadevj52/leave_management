@@ -69,7 +69,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         
         queryset = Employee.objects.filter(tenant_id=tenant_id, is_active=True)
         
-        if user.role in ['HR', 'ADMIN', 'HR_MANAGER']:
+        if user.role in ['HR', 'ADMIN', 'CHRO']:
             return queryset
         elif user.role in ['MANAGER', 'DEPARTMENT_HEAD']:
             employee = Employee.objects.filter(
@@ -91,40 +91,47 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             return [IsAuthenticated(), IsHROrAdmin()]
         return [IsAuthenticated()]
     
-    def perform_create(self, serializer):
-        user = self.request.user
-        tenant_id = to_uuid(user.tenant_id)
-        created_by = to_uuid(user.id)
+        def perform_create(self, serializer):
+            """Create employee only if tenant is valid."""
+            user = self.request.user
+            created_by = to_uuid(user.id)
+            role = self.request.data.get('role', 'EMPLOYEE')
 
-        role = self.request.data.get('role', 'EMPLOYEE')
-        
-        employee = serializer.save(
-            tenant_id=tenant_id,
-            created_by=created_by,
-            updated_by=created_by,
-            role=role
-        )
-        
-        producer = get_kafka_producer()
-        
-        if producer:
-            event = {
-                "email": employee.email,
-                "first_name": employee.first_name,
-                "last_name": employee.last_name,
-                "tenant_id": str(tenant_id),
-                "role": employee.role,
-                "default_password": "Password@123"
-            }
-            
-            try:
-                producer.send("employee_created", event)
-                producer.flush()
-                print(f"Kafka event sent for employee creation: {employee.email}")
-            except Exception as e:
-                print(f"Kafka error while sending employee_created event: {e}")
-            finally:
-                producer.close()
+            tenant_id = to_uuid(self.request.data.get('tenant_id')) or to_uuid(user.tenant_id)
+
+            if not tenant_id:
+                raise PermissionDenied("Tenant ID missing. Cannot create employee.")
+
+            is_valid_tenant = validate_tenant_via_kafka(tenant_id)
+            if not is_valid_tenant:
+                raise PermissionDenied("Invalid or inactive tenant. Cannot create employee.")
+
+            employee = serializer.save(
+                tenant_id=tenant_id,
+                created_by=created_by,
+                updated_by=created_by,
+                role=role
+            )
+
+            producer = get_kafka_producer()
+            if producer:
+                event = {
+                    "email": employee.email,
+                    "first_name": employee.first_name,
+                    "last_name": employee.last_name,
+                    "tenant_id": str(tenant_id),
+                    "role": employee.role,
+                    "default_password": "Password@123"
+                }
+
+                try:
+                    producer.send("employee_created", event)
+                    producer.flush()
+                    print(f"Kafka event sent for employee creation: {employee.email}")
+                except Exception as e:
+                    print(f"Kafka error while sending employee_created event: {e}")
+                finally:
+                    producer.close()
     
     def perform_update(self, serializer):
         user = self.request.user
@@ -220,7 +227,7 @@ class EmployeeDocumentViewSet(viewsets.ModelViewSet):
             employee__tenant_id=tenant_id
         )
         
-        if user.role not in ['HR', 'ADMIN', 'HR_MANAGER']:
+        if user.role not in ['HR', 'ADMIN', 'CHRO']:
             employee = Employee.objects.filter(
                 tenant_id=tenant_id,
                 email=user.email

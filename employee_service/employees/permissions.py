@@ -6,5 +6,4 @@ class IsHROrAdmin(BasePermission):
         if not user or not getattr(user, "is_authenticated", False):
             return False
 
-        # Check for allowed roles
-        return getattr(user, "role", "") in ["HR","ADMIN"]
+        return getattr(user, "role", "") in ["HR","ADMIN","CHRO"]

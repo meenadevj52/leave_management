@@ -6,12 +6,13 @@ from .views import (
 )
 
 router = DefaultRouter()
-router.register(r'', EmployeeViewSet, basename='employee')
+
 router.register(r'documents', EmployeeDocumentViewSet, basename='employee-document')
+router.register(r'', EmployeeViewSet, basename='employee')
 
 urlpatterns = [
     path('', include(router.urls)),
-    
+
     path('create/', EmployeeCreateView.as_view(), name='create_employee'),
     path('update/<uuid:id>/', EmployeeUpdateView.as_view(), name='update_employee'),
 ]

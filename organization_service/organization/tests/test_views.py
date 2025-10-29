@@ -34,7 +34,7 @@ class OrganizationViewSetTestCase(APITestCase):
         
         self.detail_url = f'/api/v1/organization/{self.org1.id}/'
         
-        self.admin_user = MockUser(role='Admin')
+        self.admin_user = MockUser(role='ADMIN')
         self.regular_user = MockUser(role='User')
 
     def tearDown(self):
@@ -526,7 +526,7 @@ class IsAdminPermissionTestCase(TestCase):
     def test_write_methods_allowed_for_admin(self):
         for method in ['post', 'put', 'patch', 'delete']:
             request = getattr(self.factory, method)('/api/v1/organization/')
-            request.user = MockUser(role='Admin')
+            request.user = MockUser(role='ADMIN')
             
             has_permission = self.permission.has_permission(request, self.mock_view)
             self.assertTrue(has_permission, f"{method.upper()} should be allowed for admin")
@@ -545,7 +545,7 @@ class IsAdminPermissionTestCase(TestCase):
 
     def test_permission_with_different_roles(self):
         test_cases = [
-            ('Admin', 'post', True),
+            ('ADMIN', 'post', True),
             ('User', 'get', True),
             ('Manager', 'post', False),
             ('Employee', 'delete', False),
@@ -575,7 +575,7 @@ class IsAdminPermissionTestCase(TestCase):
     def test_get_method_always_allowed(self):
         request = self.factory.get('/api/v1/organization/')
         
-        for role in ['Admin', 'User', 'Guest', 'Manager']:
+        for role in ['ADMIN', 'User', 'Guest', 'Manager']:
             request.user = MockUser(role=role)
             has_permission = self.permission.has_permission(request, self.mock_view)
             self.assertTrue(has_permission, f"GET should be allowed for {role}")

@@ -1,18 +1,16 @@
-FROM python:3.10-slim
+#!/bin/sh
+set -e
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+cd /app
 
-WORKDIR /app
+echo "Making migrations for accounts..."
+python manage.py makemigrations accounts || echo "No changes to migrate for accounts."
 
-COPY requirements.txt /app/
-RUN pip install --upgrade pip && pip install -r requirements.txt
+echo "Running migrations..."
+python manage.py migrate --noinput
 
-COPY . /app/
+echo "Creating default admin user if missing..."
+python manage.py create_admin_user || echo "Failed to run create_admin_user command."
 
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
-
-EXPOSE 8000
-
-ENTRYPOINT ["/app/entrypoint.sh"]
+echo "Starting command: $@"
+exec "$@"

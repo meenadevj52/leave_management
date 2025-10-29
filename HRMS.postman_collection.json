@@ -702,7 +702,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNjY3Njc3LCJpYXQiOjE3NjE2NjQwNzcsImp0aSI6IjExZTRmM2MyNDVhMDQyNzBhZGY1ZmRiOTNkNDhhMGMxIiwidXNlcl9pZCI6IjE1In0.NSA7SAoOnt9wV9ep_M9DVRbVukZewbPLeinmMoUjXg4"
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxODIxNDMzLCJpYXQiOjE3NjE4MTc4MzMsImp0aSI6ImE1ZDlhZGUyYWVkMTQyMmFhZTI5YjBiMWNkNjRkNDA3IiwidXNlcl9pZCI6IjEifQ.8WX1erjjts3scxyG1QtLeBSGPDbud7-6-JW1SGDWb1A"
 							},
 							{
 								"key": "Content-Type",
@@ -711,7 +711,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"first_name\":\"Meena\",\n    \"last_name\":\"Jain\",\n    \"email\":\"meenaHR4@company.com\",\n    \"designation\":\"Engineering Manager\",\n    \"role\":\"HR\",\n    \"department\":\"Human Resource\",\n    \"joining_date\":\"2023-01-15\",\n    \"employment_type\":\"Permanent\",\n    \"monthly_basic_salary\":6000.00\n  }",
+							"raw": "{\n    \"first_name\":\"Meena\",\n    \"last_name\":\"Jain\",\n    \"email\":\"meenachro13@company.com\",\n    \"designation\":\"Engineering Manager\",\n    \"role\":\"CHRO\",\n    \"department\":\"Human Resource\",\n    \"joining_date\":\"2023-01-15\",\n    \"employment_type\":\"Permanent\",\n    \"monthly_basic_salary\":6000.00,\n    \"tenant_id\":\"c78e7670-c8c2-496c-a679-70748c4f8234\"\n  }",
 							"options": {
 								"raw": {
 									"language": "json"

@@ -12,7 +12,7 @@ class IsAdminPermission(BasePermission):
     def _is_allowed(self, request):
         if request.method in ['GET', 'HEAD', 'OPTIONS']:
             return True
-        return hasattr(request.user, 'role') and request.user.role == 'Admin'
+        return hasattr(request.user, 'role') and request.user.role == 'ADMIN'
 
     def has_permission(self, request, view):
         if self._is_allowed(request):

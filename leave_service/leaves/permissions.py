@@ -10,7 +10,7 @@ class IsHROrAdmin(BasePermission):
         user = getattr(request, "user", None)
         if not user or not getattr(user, "is_authenticated", False):
             return False
-        return getattr(user, "role", "") in ["HR", "ADMIN", "HR_MANAGER"]
+        return getattr(user, "role", "") in ["HR", "ADMIN", "CHRO"]
 
 
 class IsApprover(BasePermission):
@@ -30,6 +30,6 @@ class IsOwnerOrApprover(BasePermission):
         for approval in obj.approvals.all():
             if str(approval.approver_id) == str(user.id):
                 return True
-        if user.role in ["HR", "ADMIN", "HR_MANAGER"]:
+        if user.role in ["HR", "ADMIN", "CHRO"]:
             return True
         return False

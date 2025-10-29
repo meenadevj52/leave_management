@@ -15,12 +15,11 @@ class Command(BaseCommand):
             ))
             return
 
-
         user = User.objects.create_user(
             username="admin",
             email=admin_email,
             password=default_password,
-            role="Admin",
+            role="ADMIN",
             is_staff=True,
             is_superuser=True,
         )

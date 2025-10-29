@@ -65,6 +65,11 @@ leave-management/
 
 Step 1: Build and Start All Services
 docker-compose build
+
+##Before running compose up run this on your host machine
+chmod +x auth_service/entrypoint.sh
+
+##Then run
 docker-compose up -d
 
 Step 2: Verify Running Containers

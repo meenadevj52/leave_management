@@ -5,7 +5,7 @@ from django.db import models
 
 class User(AbstractUser):
     user_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    tenant_id = models.UUIDField(editable=False)
+    tenant_id = models.UUIDField(editable=False, null=True, blank=True)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     role = models.CharField(max_length=50, blank=True, null=True)

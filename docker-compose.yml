@@ -1,0 +1,211 @@
+version: '3.8'
+
+services:
+
+  zookeeper:
+    image: bitnamilegacy/zookeeper:3.9.3-debian-12-r22
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+
+  kafka:
+    image: ganex/bitnami-kafka:3.5.1-debian-11-r72
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: "1"
+      KAFKA_LISTENERS: "PLAINTEXT://:9092"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    depends_on:
+      - zookeeper
+
+  auth_service:
+    build:
+      context: ./auth_service
+      dockerfile: Dockerfile
+    container_name: auth_service
+    ports:
+      - "8001:8000"
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - DJANGO_SETTINGS_MODULE=auth_service.settings
+    depends_on:
+      - kafka
+    volumes:
+      - ./auth_service:/app
+      - ./auth_service_data:/data
+    command: >
+      sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+
+  auth_employee_consumer:
+    build: ./auth_service
+    container_name: auth_employee_consumer
+    working_dir: /app
+    command: python -u accounts/kafka_consumer/employee_consumer.py
+    environment:
+      - DJANGO_SETTINGS_MODULE=auth_service.settings
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - PYTHONPATH=/app
+    depends_on:
+      - kafka
+    volumes:
+      - ./auth_service:/app
+    restart: on-failure
+
+  auth_token_consumer:
+    build: ./auth_service
+    container_name: auth_token_consumer
+    working_dir: /app
+    command: python -u accounts/kafka_consumer/token_validation_consumer.py
+    environment:
+      - DJANGO_SETTINGS_MODULE=auth_service.settings
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - PYTHONPATH=/app
+    depends_on:
+      - kafka
+    volumes:
+      - ./auth_service:/app
+    restart: on-failure
+
+  organization_service:
+    build:
+      context: ./organization_service
+      dockerfile: Dockerfile
+    container_name: organization_service
+    ports:
+      - "8002:8000"
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - DJANGO_SETTINGS_MODULE=organization_service.settings
+    depends_on:
+      - kafka
+    volumes:
+      - ./organization_service:/app
+      - ./organization_service_data:/data
+    command: >
+      sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+
+  org_kafka_consumer:
+    build: ./organization_service
+    container_name: org_kafka_consumer
+    command: python -u organization/kafka_consumer.py
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - DJANGO_SETTINGS_MODULE=organization_service.settings
+    depends_on:
+      - kafka
+    volumes:
+      - ./organization_service:/app
+    restart: on-failure
+
+  employee_service:
+    build:
+      context: ./employee_service
+      dockerfile: Dockerfile
+    container_name: employee_service
+    ports:
+      - "8003:8000"
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - DJANGO_SETTINGS_MODULE=employee_service.settings
+    depends_on:
+      - kafka
+    volumes:
+      - ./employee_service:/app
+      - ./employee_service_data:/data
+    command: >
+      sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+
+  employee_consumer:
+    build:
+      context: ./employee_service
+      dockerfile: Dockerfile
+    container_name: employee_consumer
+    working_dir: /app
+    command: python -u employees/consumers.py
+    environment:
+      - DJANGO_SETTINGS_MODULE=employee_service.settings
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - PYTHONPATH=/app
+    depends_on:
+      - kafka
+      - employee_service
+    volumes:
+      - ./employee_service:/app
+    restart: on-failure
+
+  policy_service:
+    build:
+      context: ./policy_service
+      dockerfile: Dockerfile
+    container_name: policy_service
+    ports:
+      - "8004:8000"
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - DJANGO_SETTINGS_MODULE=policy_service.settings
+    depends_on:
+      - kafka
+    volumes:
+      - ./policy_service:/app
+      - ./policy_service_data:/data
+    command: >
+      sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+
+  policy_consumer:
+    build:
+      context: ./policy_service
+      dockerfile: Dockerfile
+    container_name: policy_consumer
+    working_dir: /app
+    command: python manage.py run_kafka_consumer
+    environment:
+      - DJANGO_SETTINGS_MODULE=policy_service.settings
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - PYTHONPATH=/app
+    depends_on:
+      - kafka
+      - policy_service
+    volumes:
+      - ./policy_service:/app
+    restart: on-failure
+
+  leave_service:
+    build:
+      context: ./leave_service
+      dockerfile: Dockerfile
+    container_name: leave_service
+    ports:
+      - "8005:8000"
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - DJANGO_SETTINGS_MODULE=leave_service.settings
+    depends_on:
+      - kafka
+    volumes:
+      - ./leave_service:/app
+      - ./leave_service_data:/data
+    command: >
+      sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+
+  leave_onboard_consumer:
+    build:
+      context: ./leave_service
+      dockerfile: Dockerfile
+    container_name: leave_onboard_consumer
+    command: python leaves/consumers/employee_onboard.py
+    environment:
+      - DJANGO_SETTINGS_MODULE=leave_service.settings
+      - PYTHONPATH=/app
+    working_dir: /app
+    volumes:
+      - ./leave_service:/app
+    depends_on:
+      - kafka
+      - zookeeper
+    restart: on-failure

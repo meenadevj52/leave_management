@@ -1,0 +1,141 @@
+# Leave Management Microservices Architecture
+
+## Overview
+
+This project is a **Leave Management System** built with **Django Microservices Architecture**, using **Kafka** as 
+an event broker for inter-service communication.It provides a complete workflow for handling employees, organizations, leave policies, and approvals.
+
+### Microservices Structure
+
+```
+leave-management/
+├── auth_service/
+│   ├── auth_app/
+│   ├── manage.py
+│   ├── requirements.txt
+│   └── Dockerfile
+├── employee_service/
+│   ├── employees/
+│   ├── consumers/
+│   │   ├── employee_data_consumer.py
+│   │   └── __init__.py
+│   ├── manage.py
+│   ├── requirements.txt
+│   └── Dockerfile
+├── policy_service/
+│   ├── policies/
+│   ├── consumers/
+│   │   ├── policy_data_consumer.py
+│   │   └── __init__.py
+│   ├── manage.py
+│   ├── requirements.txt
+│   └── Dockerfile
+├── leave_service/
+│   ├── leaves/
+│   │   ├── services/
+│   │   │   ├── employee_service.py
+│   │   │   ├── policy_service.py
+│   │   │   ├── validation_service.py
+│   │   │   └── approval_service.py
+│   │   ├── consumers/
+│   │   │   ├── employee_onboard.py
+│   │   │   └── __init__.py
+│   │   ├── models.py
+│   │   ├── views.py
+│   │   ├── serializers.py
+│   │   └── permissions.py
+│   ├── manage.py
+│   ├── requirements.txt
+│   └── Dockerfile
+├── docker-compose.yml
+├── README.md
+└── postman/
+    └── API_Collection.postman_collection.json
+```
+
+---
+
+## Initial Setup
+
+### Default Admin Credentials
+For the first-time setup, a **default admin** account is created automatically:
+
+```
+Admin Email: admin@example.com
+Default Password: admin123
+```
+
+---
+
+## Workflow Overview
+
+1. **Login as Default Admin**  
+   Use the default credentials to authenticate through the `auth_service` login API.
+
+2. **Create an Organization (Tenant)**  
+   The admin can create an organization. Initially, the default admin does not belong to any tenant, so you must provide the `tenant_id` (organization ID).
+
+3. **Create Employees**  
+   After the organization is created, the admin (or HR/CHRO roles) can create employees.  
+   Each employee will receive credentials with the following default password:
+   ```
+   password@123
+   ```
+
+4. **Role-Based Employee Creation**  
+   Only users with roles **Admin**, **HR**, or **CHRO** can create employees.
+
+5. **Employee Onboarding**  
+   Once an employee is created:
+   - Their **default leave balance** is generated.  
+   - If no active policy exists, the balance is created with default values.
+
+6. **Policy Management**  
+   HR or CHRO can create and update leave policies.  
+   Policies follow an approval process:
+   - HR creates the policy.
+   - CHRO (or higher role) approves the policy.
+   - Once approved, it becomes the **active policy**.
+
+7. **Leave Application**  
+   Employees can apply for leaves. The approval process is similar to policy approval:
+   - HR can approve.
+   - CHRO can approve afterward for final activation.
+
+---
+
+## Kafka-Based Event Communication
+
+All microservices communicate asynchronously via **Kafka** events. Below are some key integrations:
+
+| Event | Published By | Consumed By | Description |
+|--------|---------------|-------------|--------------|
+| `tenant.verification` | Employee Service | Organization Service | Verifies tenant existence during employee creation |
+| `token.verification` | All Services | Auth Service | Validates token authenticity on every request |
+| `employee.signup` | Employee Service | Auth Service | Triggers employee sign-up (account creation) |
+| `employee.created` | Employee Service | Leave Service | Automatically creates default leave balance |
+| `policy.created` | Policy Service | Leave Service | Updates leave rules upon new policy creation |
+| `policy.updated` | Policy Service | Leave Service | Syncs policy changes across services |
+| `leave.applied` | Leave Service | Policy Service | Validates leave application against policy rules |
+
+Additional Kafka events are used for internal synchronization and future scalability.
+
+---
+
+## Tech Stack
+
+- **Framework**: Django REST Framework  
+- **Architecture**: Microservices  
+- **Communication**: Apache Kafka  
+- **Database**: PostgreSQL  
+- **Containerization**: Docker & Docker Compose  
+- **Authentication**: JWT (via `auth_service`)  
+- **Orchestration**: Kafka Consumers/Producers
+
+---
+
+
+## Summary
+
+This Leave Management System is designed for **multi-tenant organizations**, allowing admins, HRs, and CHROs to manage employees, leave policies, 
+and approvals through microservices integrated with Kafka for efficient, scalable, and reliable communication.

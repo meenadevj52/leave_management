@@ -1,0 +1,1431 @@
+{
+	"info": {
+		"_postman_id": "62e4f929-cb91-4ba2-b777-c8e7cbc0eb83",
+		"name": "HRMS",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "47410761"
+	},
+	"item": [
+		{
+			"name": "Authentication & User Setup",
+			"item": [
+				{
+					"name": "Signup",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"testHr1122\",\n    \"email\": \"john@examplehr1122.com\",\n    \"password\": \"Password123!\",\n    \"password2\": \"Password123!\",\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"tenant_id\": \"ef7f0713-c41f-4aa4-8926-9922d896a37a\",\n    \"role\": \"HR\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8001/api/v1/tenant/signup/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8001",
+							"path": [
+								"api",
+								"v1",
+								"tenant",
+								"signup",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"kumkum12345689@example.com\",\n  \"password\": \"Password@123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8001/api/v1/tenant/signin/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8001",
+							"path": [
+								"api",
+								"v1",
+								"tenant",
+								"signin",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Policy",
+			"item": [
+				{
+					"name": "Anuual Leave policy",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNTY0NTA1LCJpYXQiOjE3NjE1NjA5MDUsImp0aSI6ImNhOWU2ZmI5ZGM2MjQxM2Y4YzhmMWI0M2QyNDQ2NjUzIiwidXNlcl9pZCI6IjEwIn0.9lScj0_djOd9ddY1n-gIy9_qu3brpZaExSPKwtlkdck"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"policy_name\": \"Annual Leave Policy 2024\",\n    \"policy_type\": \"Annual\",\n    \"description\": \"Standard annual leave policy with 15 days entitlement\",\n    \"location\": \"New York\",\n    \"applies_to\": [\"Developer\", \"Manager\", \"Sales\"],\n    \"excludes\": [\"Intern\", \"Contractor\"],\n    \"entitlement\": {\n      \"base_days\": 15,\n      \"employment_types\": [\"Permanent\"]\n    },\n    \"carry_forward\": 5,\n    \"carry_forward_priority\": true,\n    \"encashment\": 5,\n    \"encashment_priority\": false,\n    \"calculation_base\": \"PER_DAY_SALARY\",\n    \"multiplier\": 1.0,\n    \"notice_period\": 7,\n    \"limit_per_month\": 0,\n    \"reset_leave_counter\": \"BEGINNING_OF_YEAR\",\n    \"employment_duration\": \"6_MONTHS\",\n    \"employment_duration_custom_days\": 0,\n    \"can_apply_previous_date\": false,\n    \"document_required\": false,\n    \"allow_multiple_day\": true,\n    \"allow_half_day\": true,\n    \"allow_comment\": true,\n    \"request_on_notice_period\": false,\n    \"approval_route\": [\"HR\", \"CHRO\"],\n    \"conditions\": [\n      {\n        \"id\": \"cond_annual_balance_check\",\n        \"description\": \"Check if requested days <= balance\",\n        \"checks\": [\n          {\"field\": \"leave_type\", \"operator\": \"eq\", \"value\": \"Annual\"},\n          {\"field\": \"leave_days\", \"operator\": \"lte\", \"value\": \"{accrual_balance}\"}\n        ],\n        \"action_if_true\": {\n          \"type\": \"allow_request\",\n          \"params\": {}\n        }\n      },\n      {\n        \"id\": \"cond_annual_exceed_balance\",\n        \"description\": \"Reject if exceeds balance\",\n        \"checks\": [\n          {\"field\": \"leave_type\", \"operator\": \"eq\", \"value\": \"Annual\"},\n          {\"field\": \"leave_days\", \"operator\": \"gt\", \"value\": \"{accrual_balance}\"}\n        ],\n        \"action_if_true\": {\n          \"type\": \"reject_request\",\n          \"params\": {\"reason\": \"Insufficient balance\"}\n        }\n      },\n      {\n        \"id\": \"cond_probation_restrict\",\n        \"description\": \"No Annual leave during probation\",\n        \"checks\": [\n          {\"field\": \"employment_type\", \"operator\": \"eq\", \"value\": \"Probation\"}\n        ],\n        \"action_if_true\": {\n          \"type\": \"reject_request\",\n          \"params\": {\"reason\": \"Not allowed during probation period\"}\n        }\n      }\n    ]\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8004/api/v1/policy/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8004",
+							"path": [
+								"api",
+								"v1",
+								"policy",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X POST \"${POLICY_URL}/api/v1/policy/\" \\\n  -H \"Authorization: Bearer ${HR_TOKEN}\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"policy_name\": \"Annual Leave Policy 2024\",\n    \"policy_type\": \"Annual\",\n    \"description\": \"Standard annual leave policy with 15 days entitlement\",\n    \"location\": \"New York\",\n    \"applies_to\": [\"Developer\", \"Manager\", \"Sales\"],\n    \"excludes\": [\"Intern\", \"Contractor\"],\n    \"entitlement\": {\n      \"base_days\": 15,\n      \"employment_types\": [\"Permanent\"]\n    },\n    \"carry_forward\": 5,\n    \"carry_forward_priority\": true,\n    \"encashment\": 5,\n    \"encashment_priority\": false,\n    \"calculation_base\": \"PER_DAY_SALARY\",\n    \"multiplier\": 1.0,\n    \"notice_period\": 7,\n    \"limit_per_month\": 0,\n    \"reset_leave_counter\": \"BEGINNING_OF_YEAR\",\n    \"employment_duration\": \"6_MONTHS\",\n    \"employment_duration_custom_days\": 0,\n    \"can_apply_previous_date\": false,\n    \"document_required\": false,\n    \"allow_multiple_day\": true,\n    \"allow_half_day\": true,\n    \"allow_comment\": true,\n    \"request_on_notice_period\": false,\n    \"approval_route\": [\"HR\", \"CHRO\"],\n    \"conditions\": [\n      {\n        \"id\": \"cond_annual_balance_check\",\n        \"description\": \"Check if requested days <= balance\",\n        \"checks\": [\n          {\"field\": \"leave_type\", \"operator\": \"eq\", \"value\": \"Annual\"},\n          {\"field\": \"leave_days\", \"operator\": \"lte\", \"value\": \"{accrual_balance}\"}\n        ],\n        \"action_if_true\": {\n          \"type\": \"allow_request\",\n          \"params\": {}\n        }\n      },\n      {\n        \"id\": \"cond_annual_exceed_balance\",\n        \"description\": \"Reject if exceeds balance\",\n        \"checks\": [\n          {\"field\": \"leave_type\", \"operator\": \"eq\", \"value\": \"Annual\"},\n          {\"field\": \"leave_days\", \"operator\": \"gt\", \"value\": \"{accrual_balance}\"}\n        ],\n        \"action_if_true\": {\n          \"type\": \"reject_request\",\n          \"params\": {\"reason\": \"Insufficient balance\"}\n        }\n      },\n      {\n        \"id\": \"cond_probation_restrict\",\n        \"description\": \"No Annual leave during probation\",\n        \"checks\": [\n          {\"field\": \"employment_type\", \"operator\": \"eq\", \"value\": \"Probation\"}\n        ],\n        \"action_if_true\": {\n          \"type\": \"reject_request\",\n          \"params\": {\"reason\": \"Not allowed during probation period\"}\n        }\n      }\n    ]\n  }' | jq\n\n# Save the policy_id from response\nexport ANNUAL_POLICY_ID=\"<policy_id_here>\""
+					},
+					"response": []
+				},
+				{
+					"name": "Casual Leave policy",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNTY0NTA1LCJpYXQiOjE3NjE1NjA5MDUsImp0aSI6ImNhOWU2ZmI5ZGM2MjQxM2Y4YzhmMWI0M2QyNDQ2NjUzIiwidXNlcl9pZCI6IjEwIn0.9lScj0_djOd9ddY1n-gIy9_qu3brpZaExSPKwtlkdck"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"policy_name\": \"Casual Leave Policy 2024\",\n    \"policy_type\": \"Casual\",\n    \"description\": \"Casual leave - no carry forward or encashment\",\n    \"location\": \"New York\",\n    \"applies_to\": [\"Developer\", \"Manager\", \"Sales\"],\n    \"excludes\": [\"Intern\"],\n    \"entitlement\": {\n      \"base_days\": 10,\n      \"employment_types\": [\"Permanent\"]\n    },\n    \"carry_forward\": 0,\n    \"encashment\": 0,\n    \"notice_period\": 3,\n    \"limit_per_month\": 2,\n    \"reset_leave_counter\": \"BEGINNING_OF_YEAR\",\n    \"employment_duration\": \"1_YEAR\",\n    \"approval_route\": [\"MANAGER\", \"HR\"],\n    \"conditions\": [\n      {\n        \"id\": \"cond_casual_monthly_limit\",\n        \"description\": \"Max 2 casual leaves per month\",\n        \"checks\": [\n          {\"field\": \"leave_type\", \"operator\": \"eq\", \"value\": \"Casual\"},\n          {\"field\": \"prior_leave_count\", \"operator\": \"gt\", \"value\": \"{monthly_limit}\"}\n        ],\n        \"action_if_true\": {\n          \"type\": \"reject_request\",\n          \"params\": {\"reason\": \"Exceeds monthly limit of 2 days\"}\n        }\n      }\n    ]\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8004/api/v1/policy/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8004",
+							"path": [
+								"api",
+								"v1",
+								"policy",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X POST \"${POLICY_URL}/api/v1/policy/\" \\\n  -H \"Authorization: Bearer ${HR_TOKEN}\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"policy_name\": \"Casual Leave Policy 2024\",\n    \"policy_type\": \"Casual\",\n    \"description\": \"Casual leave - no carry forward or encashment\",\n    \"location\": \"New York\",\n    \"applies_to\": [\"Developer\", \"Manager\", \"Sales\"],\n    \"excludes\": [\"Intern\"],\n    \"entitlement\": {\n      \"base_days\": 10,\n      \"employment_types\": [\"Permanent\"]\n    },\n    \"carry_forward\": 0,\n    \"encashment\": 0,\n    \"notice_period\": 3,\n    \"limit_per_month\": 2,\n    \"reset_leave_counter\": \"BEGINNING_OF_YEAR\",\n    \"employment_duration\": \"1_YEAR\",\n    \"approval_route\": [\"MANAGER\", \"HR\"],\n    \"conditions\": [\n      {\n        \"id\": \"cond_casual_monthly_limit\",\n        \"description\": \"Max 2 casual leaves per month\",\n        \"checks\": [\n          {\"field\": \"leave_type\", \"operator\": \"eq\", \"value\": \"Casual\"},\n          {\"field\": \"prior_leave_count\", \"operator\": \"gt\", \"value\": \"{monthly_limit}\"}\n        ],\n        \"action_if_true\": {\n          \"type\": \"reject_request\",\n          \"params\": {\"reason\": \"Exceeds monthly limit of 2 days\"}\n        }\n      }\n    ]\n  }' | jq\n\nexport CASUAL_POLICY_ID=\"<policy_id_here>\""
+					},
+					"response": []
+				},
+				{
+					"name": "List Policies",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNTY0NTA1LCJpYXQiOjE3NjE1NjA5MDUsImp0aSI6ImNhOWU2ZmI5ZGM2MjQxM2Y4YzhmMWI0M2QyNDQ2NjUzIiwidXNlcl9pZCI6IjEwIn0.9lScj0_djOd9ddY1n-gIy9_qu3brpZaExSPKwtlkdck"
+							}
+						],
+						"url": {
+							"raw": "http://127.0.0.1:8004/api/v1/policy/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8004",
+							"path": [
+								"api",
+								"v1",
+								"policy",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X GET \"${POLICY_URL}/api/v1/policy/\" \\\n  -H \"Authorization: Bearer ${HR_TOKEN}\" | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "Approve Annual Policy - Step 1 (as HR)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNTY0NTA1LCJpYXQiOjE3NjE1NjA5MDUsImp0aSI6ImNhOWU2ZmI5ZGM2MjQxM2Y4YzhmMWI0M2QyNDQ2NjUzIiwidXNlcl9pZCI6IjEwIn0.9lScj0_djOd9ddY1n-gIy9_qu3brpZaExSPKwtlkdck"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://127.0.0.1:8004/api/v1/policy/b69bcbde-c1a3-4842-a44c-88a4150913a7/approve/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8004",
+							"path": [
+								"api",
+								"v1",
+								"policy",
+								"b69bcbde-c1a3-4842-a44c-88a4150913a7",
+								"approve",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X POST \"${POLICY_URL}/api/v1/policy/${ANNUAL_POLICY_ID}/approve/\" \\\n  -H \"Authorization: Bearer ${HR_TOKEN}\" \\\n  -H \"Content-Type: application/json\" | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "Approve Annual Policy - Step 2 as CHRO",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNTY1NDk5LCJpYXQiOjE3NjE1NjE4OTksImp0aSI6ImIwZWJmNTcyMTUyMzRlOTI5ZmM3MjNhMzQ5NmE0NmMxIiwidXNlcl9pZCI6IjEyIn0.u1wRtmkE4g_k0KRb4SLgxzj9wtEUcDXmfafXisnwLcg"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://127.0.0.1:8004/api/v1/policy/b69bcbde-c1a3-4842-a44c-88a4150913a7/approve/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8004",
+							"path": [
+								"api",
+								"v1",
+								"policy",
+								"b69bcbde-c1a3-4842-a44c-88a4150913a7",
+								"approve",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X POST \"${POLICY_URL}/api/v1/policy/${ANNUAL_POLICY_ID}/approve/\" \\\n  -H \"Authorization: Bearer ${CHRO_TOKEN}\" \\\n  -H \"Content-Type: application/json\" | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Policy Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNTY1NDk5LCJpYXQiOjE3NjE1NjE4OTksImp0aSI6ImIwZWJmNTcyMTUyMzRlOTI5ZmM3MjNhMzQ5NmE0NmMxIiwidXNlcl9pZCI6IjEyIn0.u1wRtmkE4g_k0KRb4SLgxzj9wtEUcDXmfafXisnwLcg"
+							}
+						],
+						"url": {
+							"raw": "http://127.0.0.1:8004/api/v1/policy/b69bcbde-c1a3-4842-a44c-88a4150913a7/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8004",
+							"path": [
+								"api",
+								"v1",
+								"policy",
+								"b69bcbde-c1a3-4842-a44c-88a4150913a7",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X GET \"${POLICY_URL}/api/v1/policy/${ANNUAL_POLICY_ID}/\" \\\n  -H \"Authorization: Bearer ${HR_TOKEN}\" | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Audit History of a Policy",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNTY1NDk5LCJpYXQiOjE3NjE1NjE4OTksImp0aSI6ImIwZWJmNTcyMTUyMzRlOTI5ZmM3MjNhMzQ5NmE0NmMxIiwidXNlcl9pZCI6IjEyIn0.u1wRtmkE4g_k0KRb4SLgxzj9wtEUcDXmfafXisnwLcg"
+							}
+						],
+						"url": {
+							"raw": "http://127.0.0.1:8004/api/v1/policy/b69bcbde-c1a3-4842-a44c-88a4150913a7/audit-history/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8004",
+							"path": [
+								"api",
+								"v1",
+								"policy",
+								"b69bcbde-c1a3-4842-a44c-88a4150913a7",
+								"audit-history",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X GET \"${POLICY_URL}/api/v1/policy/${ANNUAL_POLICY_ID}/audit-history/\" \\\n  -H \"Authorization: Bearer ${HR_TOKEN}\" | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "Reject a Policy",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNTY0NTA1LCJpYXQiOjE3NjE1NjA5MDUsImp0aSI6ImNhOWU2ZmI5ZGM2MjQxM2Y4YzhmMWI0M2QyNDQ2NjUzIiwidXNlcl9pZCI6IjEwIn0.9lScj0_djOd9ddY1n-gIy9_qu3brpZaExSPKwtlkdck"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"reason\": \"Policy parameters need revision\",\n    \"comment\": \"Entitlement days are too low\"\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8004/api/v1/policy/aa51dd0d-af27-424c-b4da-0c1b61eebcb8/reject/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8004",
+							"path": [
+								"api",
+								"v1",
+								"policy",
+								"aa51dd0d-af27-424c-b4da-0c1b61eebcb8",
+								"reject",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X POST \"${POLICY_URL}/api/v1/policy/${TEST_POLICY_ID}/reject/\" \\\n  -H \"Authorization: Bearer ${HR_TOKEN}\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"reason\": \"Policy parameters need revision\",\n    \"comment\": \"Entitlement days are too low\"\n  }' | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "Test Policy Validation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNTY0NTA1LCJpYXQiOjE3NjE1NjA5MDUsImp0aSI6ImNhOWU2ZmI5ZGM2MjQxM2Y4YzhmMWI0M2QyNDQ2NjUzIiwidXNlcl9pZCI6IjEwIn0.9lScj0_djOd9ddY1n-gIy9_qu3brpZaExSPKwtlkdck"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"leave_request\": {\n      \"leave_type\": \"Annual\",\n      \"leave_days\": 12\n    },\n    \"employee\": {\n      \"role\": \"Developer\",\n      \"department\": \"IT\",\n      \"employment_type\": \"Permanent\",\n      \"manager_id\": \"manager-uuid\"\n    },\n    \"context\": {\n      \"accrual_balance\": 15,\n      \"monthly_limit\": 0,\n      \"prior_leave_count\": 0\n    }\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8004/api/v1/policy/aa51dd0d-af27-424c-b4da-0c1b61eebcb8/test-validation/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8004",
+							"path": [
+								"api",
+								"v1",
+								"policy",
+								"aa51dd0d-af27-424c-b4da-0c1b61eebcb8",
+								"test-validation",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X POST \"${POLICY_URL}/api/v1/policy/${ANNUAL_POLICY_ID}/test-validation/\" \\\n  -H \"Authorization: Bearer ${HR_TOKEN}\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"leave_request\": {\n      \"leave_type\": \"Annual\",\n      \"leave_days\": 12\n    },\n    \"employee\": {\n      \"role\": \"Developer\",\n      \"department\": \"IT\",\n      \"employment_type\": \"Permanent\",\n      \"manager_id\": \"manager-uuid\"\n    },\n    \"context\": {\n      \"accrual_balance\": 15,\n      \"monthly_limit\": 0,\n      \"prior_leave_count\": 0\n    }\n  }' | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Policy",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNTY0NTA1LCJpYXQiOjE3NjE1NjA5MDUsImp0aSI6ImNhOWU2ZmI5ZGM2MjQxM2Y4YzhmMWI0M2QyNDQ2NjUzIiwidXNlcl9pZCI6IjEwIn0.9lScj0_djOd9ddY1n-gIy9_qu3brpZaExSPKwtlkdck"
+							}
+						],
+						"url": {
+							"raw": "http://127.0.0.1:8004/api/v1/policy/aa51dd0d-af27-424c-b4da-0c1b61eebcb8/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8004",
+							"path": [
+								"api",
+								"v1",
+								"policy",
+								"aa51dd0d-af27-424c-b4da-0c1b61eebcb8",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X DELETE \"${POLICY_URL}/api/v1/policy/${TEST_POLICY_ID}/\" \\\n  -H \"Authorization: Bearer ${HR_TOKEN}\" | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Policy",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNTY0NTA1LCJpYXQiOjE3NjE1NjA5MDUsImp0aSI6ImNhOWU2ZmI5ZGM2MjQxM2Y4YzhmMWI0M2QyNDQ2NjUzIiwidXNlcl9pZCI6IjEwIn0.9lScj0_djOd9ddY1n-gIy9_qu3brpZaExSPKwtlkdck"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"policy_name\": \"Annual Leave Policy 2024 - Updated\",\n    \"policy_type\": \"Annual\",\n    \"carry_forward\": 10,\n    \"change_description\": \"Increased carry forward from 5 to 10 days\",\n    \"entitlement\": {\n      \"base_days\": 20\n    },\n    \"approval_route\": [\"HR\", \"CHRO\"]\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8004/api/v1/policy/b69bcbde-c1a3-4842-a44c-88a4150913a7/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8004",
+							"path": [
+								"api",
+								"v1",
+								"policy",
+								"b69bcbde-c1a3-4842-a44c-88a4150913a7",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X PUT \"${POLICY_URL}/api/v1/policy/${ANNUAL_POLICY_ID}/\" \\\n  -H \"Authorization: Bearer ${HR_TOKEN}\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"policy_name\": \"Annual Leave Policy 2024 - Updated\",\n    \"policy_type\": \"Annual\",\n    \"carry_forward\": 10,\n    \"change_description\": \"Increased carry forward from 5 to 10 days\",\n    \"entitlement\": {\n      \"base_days\": 20\n    },\n    \"approval_route\": [\"HR\", \"CHRO\"]\n  }' | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "Sick Leave policy",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer $HR_TOKEN"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"policy_name\": \"Sick Leave Policy 2024\",\n    \"policy_type\": \"Sick\",\n    \"description\": \"Sick leave policy with medical certificate requirement\",\n    \"location\": \"New York\",\n    \"applies_to\": [\"Developer\", \"Manager\", \"Sales\"],\n    \"excludes\": [\"Intern\"],\n    \"entitlement\": {\n      \"base_days\": 12,\n      \"employment_types\": [\"Permanent\", \"Contract\"]\n    },\n    \"carry_forward\": 0,\n    \"encashment\": 0,\n    \"notice_period\": 0,\n    \"limit_per_month\": 0,\n    \"reset_leave_counter\": \"BEGINNING_OF_YEAR\",\n    \"employment_duration\": \"IMMEDIATE\",\n    \"document_required\": true,\n    \"approval_route\": [\"HR\"],\n    \"conditions\": [\n      {\n        \"id\": \"cond_sick_doc_required\",\n        \"description\": \"Require medical certificate for Sick leave >3 days\",\n        \"checks\": [\n          {\"field\": \"leave_type\", \"operator\": \"eq\", \"value\": \"Sick\"},\n          {\"field\": \"leave_days\", \"operator\": \"gt\", \"value\": 3}\n        ],\n        \"action_if_true\": {\n          \"type\": \"require_documentation\",\n          \"params\": {\"doc_type\": \"Medical Certificate\", \"threshold\": 3}\n        }\n      }\n    ]\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "POLICY_URL/api/v1/policy/",
+							"host": [
+								"POLICY_URL"
+							],
+							"path": [
+								"api",
+								"v1",
+								"policy",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X POST \"${POLICY_URL}/api/v1/policy/\" \\\n  -H \"Authorization: Bearer ${HR_TOKEN}\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"policy_name\": \"Sick Leave Policy 2024\",\n    \"policy_type\": \"Sick\",\n    \"description\": \"Sick leave policy with medical certificate requirement\",\n    \"location\": \"New York\",\n    \"applies_to\": [\"Developer\", \"Manager\", \"Sales\"],\n    \"excludes\": [\"Intern\"],\n    \"entitlement\": {\n      \"base_days\": 12,\n      \"employment_types\": [\"Permanent\", \"Contract\"]\n    },\n    \"carry_forward\": 0,\n    \"encashment\": 0,\n    \"notice_period\": 0,\n    \"limit_per_month\": 0,\n    \"reset_leave_counter\": \"BEGINNING_OF_YEAR\",\n    \"employment_duration\": \"IMMEDIATE\",\n    \"document_required\": true,\n    \"approval_route\": [\"HR\"],\n    \"conditions\": [\n      {\n        \"id\": \"cond_sick_doc_required\",\n        \"description\": \"Require medical certificate for Sick leave >3 days\",\n        \"checks\": [\n          {\"field\": \"leave_type\", \"operator\": \"eq\", \"value\": \"Sick\"},\n          {\"field\": \"leave_days\", \"operator\": \"gt\", \"value\": 3}\n        ],\n        \"action_if_true\": {\n          \"type\": \"require_documentation\",\n          \"params\": {\"doc_type\": \"Medical Certificate\", \"threshold\": 3}\n        }\n      }\n    ]\n  }' | jq\n\nexport SICK_POLICY_ID=\"<policy_id_here>\""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Employee",
+			"item": [
+				{
+					"name": "List Employee",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNjM0MTYzLCJpYXQiOjE3NjE2MzA1NjMsImp0aSI6IjIyZWM5ZTQ5MmJjZjQwNjY4ZmU2N2Y4NzNiNTZkNzU1IiwidXNlcl9pZCI6IjEyIn0.Kk9W94r9Ooga4DPk3Z1kk0wKMSGRLMSkdXHMY5_Q0KI"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8003/api/v1/employees/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8003",
+							"path": [
+								"api",
+								"v1",
+								"employees",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -s -X GET \"${EMP_URL}/\" -H \"Authorization: Bearer ${HR_TOKEN}\" | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch particular employee",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNTczNTkxLCJpYXQiOjE3NjE1Njk5OTEsImp0aSI6IjcxNDU1YTIwNTdkMzRmYmRhMDdiOWRmODMzMzdhYzE1IiwidXNlcl9pZCI6IjEwIn0.kr4HkENnrR1WIWgbnKkhWLMmoMvZHbtwohLX2zBWw2s"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8003/api/v1/employees/bac2c0c9-3d13-486e-8174-58f8d4f6e537",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8003",
+							"path": [
+								"api",
+								"v1",
+								"employees",
+								"bac2c0c9-3d13-486e-8174-58f8d4f6e537"
+							]
+						},
+						"description": "Generated from cURL: curl -s -X GET \"${EMP_URL}/${EMP_ID}/\" -H \"Authorization: Bearer ${HR_TOKEN}\" | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "Full Update",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNTczNTkxLCJpYXQiOjE3NjE1Njk5OTEsImp0aSI6IjcxNDU1YTIwNTdkMzRmYmRhMDdiOWRmODMzMzdhYzE1IiwidXNlcl9pZCI6IjEwIn0.kr4HkENnrR1WIWgbnKkhWLMmoMvZHbtwohLX2zBWw2s"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\":\"John\",\n    \"last_name\":\"Doe\",\n    \"email\":\"john.doe@company.com\",\n    \"designation\":\"Senior Backend Developer\",\n    \"role\":\"EMPLOYEE\",\n    \"department\":\"Engineering\",\n    \"joining_date\":\"2024-01-10\",\n    \"employment_type\":\"Permanent\",\n    \"monthly_basic_salary\":4500.00\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8003/api/v1/employees/bac2c0c9-3d13-486e-8174-58f8d4f6e537/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8003",
+							"path": [
+								"api",
+								"v1",
+								"employees",
+								"bac2c0c9-3d13-486e-8174-58f8d4f6e537",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -s -X PUT \"${EMP_URL}/${EMP_ID}/\" \\\n  -H \"Authorization: Bearer ${HR_TOKEN}\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"first_name\":\"John\",\n    \"last_name\":\"Doe\",\n    \"email\":\"john.doe@company.com\",\n    \"designation\":\"Senior Backend Developer\",\n    \"role\":\"EMPLOYEE\",\n    \"department\":\"Engineering\",\n    \"joining_date\":\"2024-01-10\",\n    \"employment_type\":\"Permanent\",\n    \"monthly_basic_salary\":4500.00\n  }' | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "partial update employee",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNTczNTkxLCJpYXQiOjE3NjE1Njk5OTEsImp0aSI6IjcxNDU1YTIwNTdkMzRmYmRhMDdiOWRmODMzMzdhYzE1IiwidXNlcl9pZCI6IjEwIn0.kr4HkENnrR1WIWgbnKkhWLMmoMvZHbtwohLX2zBWw2s"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"designation\":\"Senior Backend Developer\",\"monthly_basic_salary\":4500.00}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8003/api/v1/employees/bac2c0c9-3d13-486e-8174-58f8d4f6e537/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8003",
+							"path": [
+								"api",
+								"v1",
+								"employees",
+								"bac2c0c9-3d13-486e-8174-58f8d4f6e537",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -s -X PATCH \"${EMP_URL}/${EMP_ID}/\" \\\n  -H \"Authorization: Bearer ${HR_TOKEN}\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"designation\":\"Senior Backend Developer\",\"monthly_basic_salary\":4500.00}' | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "create employee",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNjY3Njc3LCJpYXQiOjE3NjE2NjQwNzcsImp0aSI6IjExZTRmM2MyNDVhMDQyNzBhZGY1ZmRiOTNkNDhhMGMxIiwidXNlcl9pZCI6IjE1In0.NSA7SAoOnt9wV9ep_M9DVRbVukZewbPLeinmMoUjXg4"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\":\"Meena\",\n    \"last_name\":\"Jain\",\n    \"email\":\"meenaHR4@company.com\",\n    \"designation\":\"Engineering Manager\",\n    \"role\":\"HR\",\n    \"department\":\"Human Resource\",\n    \"joining_date\":\"2023-01-15\",\n    \"employment_type\":\"Permanent\",\n    \"monthly_basic_salary\":6000.00\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8003/api/v1/employees/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8003",
+							"path": [
+								"api",
+								"v1",
+								"employees",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -s -X POST \"${EMP_URL}/\" \\\n  -H \"Authorization: Bearer ${HR_TOKEN}\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"first_name\":\"Jane\",\n    \"last_name\":\"Manager\",\n    \"email\":\"jane.manager@company.com\",\n    \"designation\":\"Engineering Manager\",\n    \"role\":\"MANAGER\",\n    \"department\":\"Engineering\",\n    \"joining_date\":\"2023-01-15\",\n    \"employment_type\":\"Permanent\",\n    \"monthly_basic_salary\":6000.00\n  }' | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "get doc",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNjM0MTYzLCJpYXQiOjE3NjE2MzA1NjMsImp0aSI6IjIyZWM5ZTQ5MmJjZjQwNjY4ZmU2N2Y4NzNiNTZkNzU1IiwidXNlcl9pZCI6IjEyIn0.Kk9W94r9Ooga4DPk3Z1kk0wKMSGRLMSkdXHMY5_Q0KI"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8003/api/v1/employees/documents/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8003",
+							"path": [
+								"api",
+								"v1",
+								"employees",
+								"documents",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -s -X GET \"${EMP_URL}/documents/\" -H \"Authorization: Bearer ${HR_TOKEN}\" | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "Create employee document",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNjM0MTYzLCJpYXQiOjE3NjE2MzA1NjMsImp0aSI6IjIyZWM5ZTQ5MmJjZjQwNjY4ZmU2N2Y4NzNiNTZkNzU1IiwidXNlcl9pZCI6IjEyIn0.Kk9W94r9Ooga4DPk3Z1kk0wKMSGRLMSkdXHMY5_Q0KI"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"employee\": \"bac2c0c9-3d13-486e-8174-58f8d4f6e537\",\n    \"document_type\": \"MEDICAL_CERTIFICATE\",\n    \"document_name\": \"medical_note.pdf\",\n    \"file_path\": \"uploads/medical_note.pdf\",\n    \"file_size\": 12345\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8003/api/v1/employees/documents/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8003",
+							"path": [
+								"api",
+								"v1",
+								"employees",
+								"documents",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -s -X POST \"${EMP_URL}/documents/\" \\\n  -H \"Authorization: Bearer ${HR_TOKEN}\" \\\n  -H \"Content-Type: application/json\" \\\n  -d \"{\n    \\\"employee\\\": \\\"${EMP_ID}\\\",\n    \\\"document_type\\\": \\\"MEDICAL_CERTIFICATE\\\",\n    \\\"document_name\\\": \\\"medical_note.pdf\\\",\n    \\\"file_path\\\": \\\"uploads/medical_note.pdf\\\",\n    \\\"file_size\\\": 12345\n  }\" | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "search by department",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNjM0MTYzLCJpYXQiOjE3NjE2MzA1NjMsImp0aSI6IjIyZWM5ZTQ5MmJjZjQwNjY4ZmU2N2Y4NzNiNTZkNzU1IiwidXNlcl9pZCI6IjEyIn0.Kk9W94r9Ooga4DPk3Z1kk0wKMSGRLMSkdXHMY5_Q0KI"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8003/api/v1/employees/by-department/?department=Engineering",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8003",
+							"path": [
+								"api",
+								"v1",
+								"employees",
+								"by-department",
+								""
+							],
+							"query": [
+								{
+									"key": "department",
+									"value": "Engineering"
+								}
+							]
+						},
+						"description": "Generated from cURL: curl -s -X GET \"${EMP_URL}/by-department/?department=Engineering\" -H \"Authorization: Bearer ${HR_TOKEN}\" | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNjM0MTYzLCJpYXQiOjE3NjE2MzA1NjMsImp0aSI6IjIyZWM5ZTQ5MmJjZjQwNjY4ZmU2N2Y4NzNiNTZkNzU1IiwidXNlcl9pZCI6IjEyIn0.Kk9W94r9Ooga4DPk3Z1kk0wKMSGRLMSkdXHMY5_Q0KI"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8003/api/v1/employees/68045f42-2e3f-46d1-80c6-f092cc91a607/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8003",
+							"path": [
+								"api",
+								"v1",
+								"employees",
+								"68045f42-2e3f-46d1-80c6-f092cc91a607",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -s -X DELETE \"${EMP_URL}/${EMP_ID}/\" -H \"Authorization: Bearer ${HR_TOKEN}\" -i"
+					},
+					"response": []
+				},
+				{
+					"name": "profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNTc3MDI4LCJpYXQiOjE3NjE1NzM0MjgsImp0aSI6IjFkMTRiOGMxMzUxOTQ0ZTc4MWMzNDhiNTJiYmU2MGJhIiwidXNlcl9pZCI6IjgifQ.CwlZNTCkCNEms6iCGaft7GwEi2_A5HQ1eCXhZ_j9bIc"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8003/api/v1/employees/me/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8003",
+							"path": [
+								"api",
+								"v1",
+								"employees",
+								"me",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -s -X GET \"${EMP_URL}/me/\" -H \"Authorization: Bearer ${EMPLOYEE_TOKEN}\" | jq"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Organization",
+			"item": [
+				{
+					"name": "create organization",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNjQ5MzI0LCJpYXQiOjE3NjE2NDU3MjQsImp0aSI6IjNmNjM3MDA4Yzk4NTQyNGFiMTYyZDYxYTIzZmYyN2VhIiwidXNlcl9pZCI6IjE2In0.QzM8zvPglOPDdSk4rk-oCNpbzVdBJMNdqoSoJTR1lz8"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Acme Corp\",\n    \"domain\": \"acme.example.com\",\n    \"is_active\": true\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8002/api/v1/organization/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8002",
+							"path": [
+								"api",
+								"v1",
+								"organization",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -s -X POST \"${ORG_URL}/\" \\\n  -H \"Authorization: Bearer ${ADMIN_TOKEN}\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"name\": \"Acme Corp\",\n    \"domain\": \"acme.example.com\",\n    \"is_active\": true\n  }' | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "retrieve organization",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNjQ5MzI0LCJpYXQiOjE3NjE2NDU3MjQsImp0aSI6IjNmNjM3MDA4Yzk4NTQyNGFiMTYyZDYxYTIzZmYyN2VhIiwidXNlcl9pZCI6IjE2In0.QzM8zvPglOPDdSk4rk-oCNpbzVdBJMNdqoSoJTR1lz8"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8002/api/v1/organization/ef7f0713-c41f-4aa4-8926-9922d896a37a",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8002",
+							"path": [
+								"api",
+								"v1",
+								"organization",
+								"ef7f0713-c41f-4aa4-8926-9922d896a37a"
+							]
+						},
+						"description": "Generated from cURL: curl -s -X GET \"${ORG_URL}/${ORG_ID}/\" \\\n  -H \"Authorization: Bearer ${AUTH_TOKEN}\" \\\n  | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "get organizations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNjQ5MzI0LCJpYXQiOjE3NjE2NDU3MjQsImp0aSI6IjNmNjM3MDA4Yzk4NTQyNGFiMTYyZDYxYTIzZmYyN2VhIiwidXNlcl9pZCI6IjE2In0.QzM8zvPglOPDdSk4rk-oCNpbzVdBJMNdqoSoJTR1lz8"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8002/api/v1/organization/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8002",
+							"path": [
+								"api",
+								"v1",
+								"organization",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -s -X GET \"${ORG_URL}/\" \\\n  -H \"Authorization: Bearer ${AUTH_TOKEN}\" \\\n  | jq"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Leave",
+			"item": [
+				{
+					"name": "Create Holiday",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNzI1OTg3LCJpYXQiOjE3NjE3MjIzODcsImp0aSI6IjJiYzU4YTQxMDU4YjQ2ZmRhY2ZmOWQ2Y2Q2MzFjNWE5IiwidXNlcl9pZCI6IjIxIn0.pU0JL_nwdF_QQuDgkqK078Jo_P209il8Da_yN6iJ3Ck"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"New year\",\n    \"date\": \"2025-01-01\",\n    \"is_optional\": false\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8005/api/v1/leaves/holidays/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8005",
+							"path": [
+								"api",
+								"v1",
+								"leaves",
+								"holidays",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X POST \"${LEAVE_URL}/api/v1/leaves/holidays/\" \\\n  -H \"Authorization: Bearer ${HR_TOKEN}\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"name\": \"Christmas\",\n    \"date\": \"2024-12-25\",\n    \"is_optional\": false\n  }' | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "Get leave list by Employee",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNzM1MDYxLCJpYXQiOjE3NjE3MzE0NjEsImp0aSI6IjgyOTNjMjQwZmExNzRiNGQ4MGI1ZGM1MGYwNTNmYTEwIiwidXNlcl9pZCI6IjI0In0.cGUW4yEmcuVrqVa1RC39vufHpJiPYKe4ba8GzuPup7o"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8005/api/v1/leaves/applications/my-leaves/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8005",
+							"path": [
+								"api",
+								"v1",
+								"leaves",
+								"applications",
+								"my-leaves",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X GET \"${LEAVE_URL}/api/v1/leaves/applications/my-leaves/\" \\\n  -H \"Authorization: Bearer ${EMPLOYEE_TOKEN}\" | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "leave audit trail",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNzQxMDU1LCJpYXQiOjE3NjE3Mzc0NTUsImp0aSI6Ijg3Njk3OGE4M2VlODRkNDlhZDEzYzE3ZjdjZDZlMmY1IiwidXNlcl9pZCI6IjI0In0.Whe87urh9L3nalrIp48k6lUVfbD-8pbA3wsJAckMD9M"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8005/api/v1/leaves/applications/4bd10e84-d849-4023-a17c-e96c25bd4289/audit-history/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8005",
+							"path": [
+								"api",
+								"v1",
+								"leaves",
+								"applications",
+								"4bd10e84-d849-4023-a17c-e96c25bd4289",
+								"audit-history",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X GET \"${LEAVE_URL}/api/v1/leaves/applications/${LEAVE_APP_ID}/audit-history/\" \\\n  -H \"Authorization: Bearer ${EMPLOYEE_TOKEN}\" | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "half day",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNzM1MDYxLCJpYXQiOjE3NjE3MzE0NjEsImp0aSI6IjgyOTNjMjQwZmExNzRiNGQ4MGI1ZGM1MGYwNTNmYTEwIiwidXNlcl9pZCI6IjI0In0.cGUW4yEmcuVrqVa1RC39vufHpJiPYKe4ba8GzuPup7o"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"leave_type\": \"Casual\",\n    \"request_type\": \"leave\",\n    \"start_date\": \"2024-12-15\",\n    \"end_date\": \"2024-12-15\",\n    \"is_half_day\": true,\n    \"half_day_period\": \"morning\",\n    \"reason\": \"Personal appointment\"\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8005/api/v1/leaves/applications/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8005",
+							"path": [
+								"api",
+								"v1",
+								"leaves",
+								"applications",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X POST \"${LEAVE_URL}/api/v1/leaves/applications/\" \\\n  -H \"Authorization: Bearer ${EMPLOYEE_TOKEN}\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"leave_type\": \"Casual\",\n    \"request_type\": \"leave\",\n    \"start_date\": \"2024-12-15\",\n    \"end_date\": \"2024-12-15\",\n    \"is_half_day\": true,\n    \"half_day_period\": \"morning\",\n    \"reason\": \"Personal appointment\"\n  }' | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "Check leave balance",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNzM4MDM2LCJpYXQiOjE3NjE3MzQ0MzYsImp0aSI6ImQwODNiODY2NTYwNDQzOTk4ODkwNDdiYWE1ZDIwZWJjIiwidXNlcl9pZCI6IjI0In0.5M-HwUNcPVW7VdCxOWvAwPTtqokWkUfQ0JB8zafDa6g"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8005/api/v1/leaves/balances/my-balance/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8005",
+							"path": [
+								"api",
+								"v1",
+								"leaves",
+								"balances",
+								"my-balance",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X GET \"${LEAVE_URL}/api/v1/leaves/balances/my-balance/\" \\\n  -H \"Authorization: Bearer ${EMPLOYEE_TOKEN}\" | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "anuual leave approve by hr",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNzQyMDYzLCJpYXQiOjE3NjE3Mzg0NjMsImp0aSI6ImJkNDVkMjA1M2ZmYjQ2MTY4YjIzZDY4MWE4N2Q5OWQ4IiwidXNlcl9pZCI6IjE5In0.7hynDe1dvJNv3r3j98XSkgK-mGCpmpylhpdTpQJAvsY"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"action\": \"approve\",\n    \"comments\": \"Approved by HR\"\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8005/api/v1/leaves/applications/4bd10e84-d849-4023-a17c-e96c25bd4289/approve/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8005",
+							"path": [
+								"api",
+								"v1",
+								"leaves",
+								"applications",
+								"4bd10e84-d849-4023-a17c-e96c25bd4289",
+								"approve",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X POST \"${LEAVE_URL}/api/v1/leaves/applications/${LEAVE_APP_ID}/approve/\" \\\n  -H \"Authorization: Bearer ${HR_TOKEN}\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"action\": \"approve\",\n    \"comments\": \"Approved by HR\"\n  }' | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "create leave",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNzQxMDU1LCJpYXQiOjE3NjE3Mzc0NTUsImp0aSI6Ijg3Njk3OGE4M2VlODRkNDlhZDEzYzE3ZjdjZDZlMmY1IiwidXNlcl9pZCI6IjI0In0.Whe87urh9L3nalrIp48k6lUVfbD-8pbA3wsJAckMD9M"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"leave_type\": \"Annual\",\n    \"request_type\": \"leave\",\n    \"start_date\": \"2025-12-29\",\n    \"end_date\": \"2025-12-30\",\n    \"is_half_day\": false,\n    \"reason\": \"Family vacation during Christmas holidays\",\n    \"comments\": \"Will be available on phone if urgent\"\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8005/api/v1/leaves/applications/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8005",
+							"path": [
+								"api",
+								"v1",
+								"leaves",
+								"applications",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X POST \"${LEAVE_URL}/api/v1/leaves/applications/\" \\\n  -H \"Authorization: Bearer ${EMPLOYEE_TOKEN}\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"leave_type\": \"Annual\",\n    \"request_type\": \"leave\",\n    \"start_date\": \"2024-12-20\",\n    \"end_date\": \"2024-12-24\",\n    \"is_half_day\": false,\n    \"reason\": \"Family vacation during Christmas holidays\",\n    \"comments\": \"Will be available on phone if urgent\"\n  }' | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "apply more then the available balace",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNzQxMDU1LCJpYXQiOjE3NjE3Mzc0NTUsImp0aSI6Ijg3Njk3OGE4M2VlODRkNDlhZDEzYzE3ZjdjZDZlMmY1IiwidXNlcl9pZCI6IjI0In0.Whe87urh9L3nalrIp48k6lUVfbD-8pbA3wsJAckMD9M"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"leave_type\": \"Annual\",\n    \"start_date\": \"2025-03-01\",\n    \"end_date\": \"2025-03-25\",\n    \"reason\": \"Extended vacation\"\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8005/api/v1/leaves/applications/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8005",
+							"path": [
+								"api",
+								"v1",
+								"leaves",
+								"applications",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X POST \"${LEAVE_URL}/api/v1/leaves/applications/\" \\\n  -H \"Authorization: Bearer ${EMPLOYEE_TOKEN}\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"leave_type\": \"Annual\",\n    \"start_date\": \"2025-03-01\",\n    \"end_date\": \"2025-03-25\",\n    \"reason\": \"Extended vacation\"\n  }' | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "last approval by chro",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNzQzMzM0LCJpYXQiOjE3NjE3Mzk3MzQsImp0aSI6IjJiNDE5NGI3ZGVhMTRlYjliYzdjN2YyZTgxMDliZGZlIiwidXNlcl9pZCI6IjI2In0.L1JcXGAu1aFjne-G4nJJfu6mSMSncYzcwxSO4cCjK2I"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"action\": \"approve\", \"comments\": \"Final approval\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8005/api/v1/leaves/applications/4bd10e84-d849-4023-a17c-e96c25bd4289/approve/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8005",
+							"path": [
+								"api",
+								"v1",
+								"leaves",
+								"applications",
+								"4bd10e84-d849-4023-a17c-e96c25bd4289",
+								"approve",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X POST \"${LEAVE_URL}/api/v1/leaves/applications/${LEAVE_ID}/approve/\" \\\n  -H \"Authorization: Bearer ${CHRO_TOKEN}\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"action\": \"approve\", \"comments\": \"Final approval\"}' | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "leave enchashment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNzM1MDYxLCJpYXQiOjE3NjE3MzE0NjEsImp0aSI6IjgyOTNjMjQwZmExNzRiNGQ4MGI1ZGM1MGYwNTNmYTEwIiwidXNlcl9pZCI6IjI0In0.cGUW4yEmcuVrqVa1RC39vufHpJiPYKe4ba8GzuPup7o"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"leave_type\": \"Annual\",\n    \"request_type\": \"encashment\",\n    \"start_date\": \"2024-12-31\",\n    \"end_date\": \"2024-12-31\",\n    \"encashment_days\": 5,\n    \"reason\": \"End of year encashment\"\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8005/api/v1/leaves/applications/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8005",
+							"path": [
+								"api",
+								"v1",
+								"leaves",
+								"applications",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X POST \"${LEAVE_URL}/api/v1/leaves/applications/\" \\\n  -H \"Authorization: Bearer ${EMPLOYEE_TOKEN}\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"leave_type\": \"Annual\",\n    \"request_type\": \"encashment\",\n    \"start_date\": \"2024-12-31\",\n    \"end_date\": \"2024-12-31\",\n    \"encashment_days\": 5,\n    \"reason\": \"End of year encashment\"\n  }' | jq"
+					},
+					"response": []
+				},
+				{
+					"name": "List Holidays",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNzI1OTg3LCJpYXQiOjE3NjE3MjIzODcsImp0aSI6IjJiYzU4YTQxMDU4YjQ2ZmRhY2ZmOWQ2Y2Q2MzFjNWE5IiwidXNlcl9pZCI6IjIxIn0.pU0JL_nwdF_QQuDgkqK078Jo_P209il8Da_yN6iJ3Ck"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8005/api/v1/leaves/holidays/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8005",
+							"path": [
+								"api",
+								"v1",
+								"leaves",
+								"holidays",
+								""
+							]
+						},
+						"description": "Generated from cURL: curl -X GET \"${LEAVE_URL}/api/v1/leaves/holidays/\" \\\n  -H \"Authorization: Bearer ${EMPLOYEE_TOKEN}\" | jq"
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

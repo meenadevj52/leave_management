@@ -812,7 +812,7 @@ class LeaveBalanceViewSet(viewsets.ReadOnlyModelViewSet):
         user = self.request.user
         tenant_id = to_uuid(user.tenant_id)
         
-        if user.role in ['HR', 'ADMIN', 'CHRO']
+        if user.role in ['HR', 'ADMIN', 'CHRO']:
             return LeaveBalance.objects.filter(tenant_id=tenant_id)
         else:
             return LeaveBalance.objects.filter(

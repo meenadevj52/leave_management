@@ -9,7 +9,7 @@ KAFKA_BROKER = getattr(settings, "KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
 
 
 def get_kafka_producer(retry_delay=2, max_retries=5):
-    """Lazy Kafka producer with retry."""
+
     producer = None
     attempts = 0
     while not producer and attempts < max_retries:
@@ -26,7 +26,7 @@ def get_kafka_producer(retry_delay=2, max_retries=5):
 
 
 def get_kafka_consumer(topic, group_id, consumer_timeout_ms=5000):
-    """Lazy Kafka consumer with optional timeout in ms."""
+
     consumer = None
     attempts = 0
     while not consumer and attempts < 5:
@@ -47,10 +47,7 @@ def get_kafka_consumer(topic, group_id, consumer_timeout_ms=5000):
 
 
 class AuthServiceTokenAuthentication(authentication.BaseAuthentication):
-    """
-    Authenticates users by sending token to Auth Service via Kafka and waiting for reply.
-    The Auth Service must reply on reply_topic with correlation_id and return user info.
-    """
+
     TIMEOUT_SECONDS = 15
 
     def authenticate(self, request):
@@ -105,6 +102,7 @@ class AuthServiceTokenAuthentication(authentication.BaseAuthentication):
                     if not user_id or not tenant_id:
                         raise exceptions.AuthenticationFailed("Auth service response missing user_id/tenant_id")
 
+
                     class AuthUser:
                         def __init__(self, user_id, tenant_id, role, email):
                             self.id = user_id
@@ -116,8 +114,11 @@ class AuthServiceTokenAuthentication(authentication.BaseAuthentication):
                         def __str__(self):
                             return f"<AuthUser {self.email} ({self.role})>"
 
+
                     user = AuthUser(user_id, tenant_id, role, email)
                     return (user, None)
+
+
             raise exceptions.AuthenticationFailed("Auth service timeout")
 
         finally:

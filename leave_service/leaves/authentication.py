@@ -10,7 +10,6 @@ AUTH_REQUEST_TOPIC = "validate_token_requests"
 
 
 class AuthUser:
-    """A simple user-like object for DRF request.user"""
     def __init__(self, user_id, tenant_id, role, email):
         self.id = user_id
         self.tenant_id = tenant_id

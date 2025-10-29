@@ -1,156 +1,221 @@
+import os
+import django
 import json
 import time
+import socket
+import logging
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "employee_service.settings")
+django.setup()
+
 from kafka import KafkaConsumer, KafkaProducer
 from django.conf import settings
-from .models import Employee
-from .serializers import EmployeeDetailSerializer
+from employees.models import Employee
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 KAFKA_BROKER = getattr(settings, "KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
+KAFKA_TOPICS = getattr(settings, "KAFKA_TOPICS", {})
 
-
-def get_kafka_producer():
-    producer = None
-    retry_count = 0
-    max_retries = 5
-    
-    while not producer and retry_count < max_retries:
-        try:
-            producer = KafkaProducer(
-                bootstrap_servers=KAFKA_BROKER,
-                value_serializer=lambda v: json.dumps(v).encode("utf-8")
-            )
-            print("Kafka producer connected")
-        except Exception as e:
-            print(f"Kafka not ready, retrying... ({retry_count}/{max_retries}): {e}")
-            time.sleep(5)
-            retry_count += 1
-    
-    return producer
+REQUEST_TOPIC = KAFKA_TOPICS.get("EMPLOYEE_REQUEST", "employee_data_requests")
+RESPONSE_TOPIC = KAFKA_TOPICS.get("EMPLOYEE_RESPONSE", "employee_data_responses")
 
 
 def serialize_employee(employee):
+
     return {
-        'id': str(employee.id),
-        'tenant_id': str(employee.tenant_id),
-        'full_name': employee.full_name,
-        'first_name': employee.first_name,
-        'last_name': employee.last_name,
-        'email': employee.email,
-        'phone': employee.phone,
-        'designation': employee.designation,
-        'role': employee.role,
-        'department': employee.department,
-        'manager_id': str(employee.manager.id) if employee.manager else None,
-        'manager_name': employee.manager.full_name if employee.manager else None,
-        'department_head_id': str(employee.department_head.id) if employee.department_head else None,
-        'employment_type': employee.employment_type,
-        'is_permanent': employee.is_permanent,
-        'joining_date': str(employee.joining_date),
-        'tenure_months': employee.tenure_months,
-        'tenure_years': employee.tenure_years,
-        'is_on_probation': employee.is_on_probation,
-        'salary_per_day': float(employee.salary_per_day),
-        'monthly_basic_salary': float(employee.monthly_basic_salary),
-        'monthly_gross_salary': float(employee.monthly_gross_salary),
-        'is_in_notice_period': employee.is_in_notice_period,
-        'notice_period_start_date': str(employee.notice_period_start_date) if employee.notice_period_start_date else None,
-        'is_active': employee.is_active,
+        "id": str(employee.id),
+        "full_name": employee.full_name,
+        "email": employee.email,
+        "role": employee.role,
+        "designation": getattr(employee, 'designation', employee.role),
+        "department": employee.department,
+        "manager_id": str(employee.manager_id) if employee.manager_id else None,
+        "employment_type": getattr(employee, 'employment_type', 'Permanent'),
+        "joining_date": str(employee.joining_date) if hasattr(employee, 'joining_date') else None,
+        "salary_per_day": float(getattr(employee, 'salary_per_day', 0)),
+        "is_in_notice_period": getattr(employee, 'is_in_notice_period', False),
+        "is_department_head": getattr(employee, 'is_department_head', False),
     }
 
 
-def handle_employee_request(message, producer):
+def handle_employee_request(data, producer):
+
+    correlation_id = data.get("correlation_id")
+    action = data.get("action")
+    
+    logger.info(f"Received: {action} | Correlation: {correlation_id}")
+    
     try:
-        request_data = message.value
-        correlation_id = request_data.get("correlation_id")
-        employee_id = request_data.get("employee_id")
-        action = request_data.get("action")
-        
-        print(f"Received employee request: {action} | Employee: {employee_id}")
-        
-        response = {
-            "correlation_id": correlation_id,
-            "status": "error",
-            "error": "Invalid action"
-        }
-        
         if action == "get_employee_details":
+            employee_id = data.get("employee_id")
+            
             try:
                 employee = Employee.objects.get(id=employee_id, is_active=True)
-                
                 response = {
                     "correlation_id": correlation_id,
                     "status": "success",
                     "employee": serialize_employee(employee)
                 }
-                
-                print(f"Found employee: {employee.full_name}")
-                
+                logger.info(f"Found employee: {employee.full_name}")
             except Employee.DoesNotExist:
                 response = {
                     "correlation_id": correlation_id,
                     "status": "error",
-                    "error": f"Employee with ID {employee_id} not found"
+                    "error": f"Employee not found with ID: {employee_id}"
                 }
-                print(f"Employee not found: {employee_id}")
+                logger.warning(f"Employee not found: {employee_id}")
             
-            except Employee.MultipleObjectsReturned:
+            producer.send(RESPONSE_TOPIC, response)
+        
+        elif action == "get_employee_by_email":
+            email = data.get("email")
+            
+            try:
+                employee = Employee.objects.get(email=email, is_active=True)
+                response = {
+                    "correlation_id": correlation_id,
+                    "status": "success",
+                    "employee": serialize_employee(employee)
+                }
+                logger.info(f"Found employee by email: {employee.full_name} ({email})")
+            except Employee.DoesNotExist:
                 response = {
                     "correlation_id": correlation_id,
                     "status": "error",
-                    "error": "Multiple employees found with same ID"
+                    "error": f"Employee not found with email: {email}"
                 }
-                print(f"Multiple employees found: {employee_id}")
+                logger.warning(f"Employee not found: {email}")
+            
+            producer.send(RESPONSE_TOPIC, response)
         
-        # Send response back
-        producer.send('employee_data_responses', response)
+        elif action == "get_users_by_role":
+            tenant_id = data.get("tenant_id")
+            role = data.get("role")
+            
+            logger.info(f"Searching for users with role: {role} in tenant: {tenant_id}")
+            
+            users = Employee.objects.filter(
+                tenant_id=tenant_id,
+                role=role,
+                is_active=True
+            )
+            
+            users_list = [serialize_employee(user) for user in users]
+            
+            response = {
+                "correlation_id": correlation_id,
+                "status": "success",
+                "users": users_list
+            }
+            
+            logger.info(f"Found {len(users_list)} user(s) with role {role}")
+            producer.send(RESPONSE_TOPIC, response)
+        
+        elif action == "get_department_head":
+            tenant_id = data.get("tenant_id")
+            department = data.get("department")
+            
+            logger.info(f"Searching for department head: {department} in tenant: {tenant_id}")
+            
+            dept_head = Employee.objects.filter(
+                tenant_id=tenant_id,
+                department=department,
+                is_department_head=True,
+                is_active=True
+            ).first()
+            
+            if not dept_head:
+                dept_head = Employee.objects.filter(
+                    tenant_id=tenant_id,
+                    department=department,
+                    role__in=['MANAGER', 'DEPARTMENT_HEAD', 'HEAD', 'TECH_MANAGER', 'TECHNOLOGY_MANAGER'],
+                    is_active=True
+                ).first()
+            
+            if dept_head:
+                response = {
+                    "correlation_id": correlation_id,
+                    "status": "success",
+                    "department_head": serialize_employee(dept_head)
+                }
+                logger.info(f"Found department head: {dept_head.full_name}")
+            else:
+                response = {
+                    "correlation_id": correlation_id,
+                    "status": "error",
+                    "error": f"Department head not found for department: {department}"
+                }
+                logger.warning(f"Department head not found for: {department}")
+            
+            producer.send(RESPONSE_TOPIC, response)
+        else:
+            response = {
+                "correlation_id": correlation_id,
+                "status": "error",
+                "error": f"Invalid action: {action}"
+            }
+            logger.error(f"Invalid action: {action}")
+            producer.send(RESPONSE_TOPIC, response)
+        
+        logger.info(f"Sending response to: {RESPONSE_TOPIC}")
         producer.flush()
-        
-        print(f"Sent employee response for correlation_id: {correlation_id}")
+        logger.info(f"Response sent for: {correlation_id}")
+        logger.info("-" * 60)
         
     except Exception as e:
-        print(f"Error handling employee request: {e}")
-        
-        # Send error response
-        error_response = {
-            "correlation_id": request_data.get("correlation_id", "unknown"),
+        logger.error(f"Error handling request: {e}", exc_info=True)
+        response = {
+            "correlation_id": correlation_id,
             "status": "error",
             "error": str(e)
         }
-        producer.send('employee_data_responses', error_response)
+        producer.send(RESPONSE_TOPIC, response)
         producer.flush()
 
 
-def start_employee_request_consumer():
-    print("Starting Employee Request Consumer...")
+def start_consumer():
+    logger.info("Starting Employee Data Consumer...")
+    logger.info(f"Kafka Broker: {KAFKA_BROKER}")
+    logger.info(f"Listening on: {REQUEST_TOPIC}")
+    logger.info(f"Responding to: {RESPONSE_TOPIC}")
     
-    # Get producer for responses
-    producer = get_kafka_producer()
-    
-    if not producer:
-        print("Failed to connect Kafka producer. Exiting.")
-        return
-    
-    # Create consumer
-    consumer = KafkaConsumer(
-        'employee_data_requests',
+    producer = KafkaProducer(
         bootstrap_servers=KAFKA_BROKER,
-        group_id='employee_service_consumer_group',
-        auto_offset_reset='latest',
-        enable_auto_commit=True,
-        value_deserializer=lambda m: json.loads(m.decode('utf-8'))
+        value_serializer=lambda v: json.dumps(v).encode("utf-8")
     )
     
-    print("Employee consumer connected and listening for requests...")
+    consumer = KafkaConsumer(
+        REQUEST_TOPIC,
+        bootstrap_servers=KAFKA_BROKER,
+        group_id="employee_data_consumer_group",
+        auto_offset_reset="earliest",
+        enable_auto_commit=True,
+        value_deserializer=lambda m: json.loads(m.decode("utf-8")),
+    )
+    
+    logger.info("Consumer ready and listening...")
+    logger.info("=" * 60)
     
     try:
-        for message in consumer:
-            handle_employee_request(message, producer)
+        for msg in consumer:
+            logger.info("Message received from Kafka")
+            data = msg.value
+            handle_employee_request(data, producer)
+    
     except KeyboardInterrupt:
-        print("\nShutting down Employee consumer...")
+        logger.info("\nShutting down consumer...")
     except Exception as e:
-        print(f"Consumer error: {e}")
+        logger.error(f"Consumer error: {e}", exc_info=True)
     finally:
         consumer.close()
         producer.close()
-        print("Employee consumer shutdown complete")
+        logger.info("Consumer shutdown complete")
+
+
+if __name__ == "__main__":
+    start_consumer()

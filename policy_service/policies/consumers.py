@@ -1,3 +1,4 @@
+
 import json
 import time
 from kafka import KafkaConsumer, KafkaProducer
@@ -8,6 +9,7 @@ KAFKA_BROKER = getattr(settings, "KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
 
 
 def get_kafka_producer():
+
     producer = None
     retry_count = 0
     max_retries = 5
@@ -28,6 +30,7 @@ def get_kafka_producer():
 
 
 def serialize_policy(policy):
+
     return {
         'id': str(policy.id),
         'tenant_id': str(policy.tenant_id),
@@ -69,6 +72,7 @@ def serialize_policy(policy):
 
 
 def handle_policy_request(message, producer):
+
     try:
         request_data = message.value
         correlation_id = request_data.get("correlation_id")
@@ -127,7 +131,7 @@ def handle_policy_request(message, producer):
         
         elif action == "validate_leave_request":
             pass
-
+        
         producer.send('policy_data_responses', response)
         producer.flush()
         
@@ -146,6 +150,7 @@ def handle_policy_request(message, producer):
 
 
 def start_policy_request_consumer():
+
     print("Starting Policy Request Consumer...")
     
     producer = get_kafka_producer()
@@ -154,11 +159,12 @@ def start_policy_request_consumer():
         print("Failed to connect Kafka producer. Exiting.")
         return
     
+
     consumer = KafkaConsumer(
         'policy_data_requests',
         bootstrap_servers=KAFKA_BROKER,
         group_id='policy_service_consumer_group',
-        auto_offset_reset='latest',
+        auto_offset_reset='earliest',
         enable_auto_commit=True,
         value_deserializer=lambda m: json.loads(m.decode('utf-8'))
     )
@@ -169,7 +175,7 @@ def start_policy_request_consumer():
         for message in consumer:
             handle_policy_request(message, producer)
     except KeyboardInterrupt:
-        print("\n Shutting down Policy consumer...")
+        print("\nShutting down Policy consumer...")
     except Exception as e:
         print(f"Consumer error: {e}")
     finally:

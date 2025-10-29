@@ -7,6 +7,7 @@ from django.conf import settings
 
 
 def get_kafka_producer():
+
     producer = None
     retry_count = 0
     max_retries = 3
@@ -26,10 +27,12 @@ def get_kafka_producer():
 
 
 def validate_tenant_via_kafka(tenant_id, timeout=10):
+
     correlation_id = str(uuid.uuid4())
     producer = get_kafka_producer()
     if not producer:
         raise PermissionDenied("Kafka producer unavailable for tenant validation.")
+
 
     request_event = {
         "tenant_id": str(tenant_id),

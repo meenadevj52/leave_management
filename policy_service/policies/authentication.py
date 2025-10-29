@@ -18,18 +18,18 @@ class AuthUser:
 
 
 class AuthServiceTokenAuthentication(authentication.BaseAuthentication):
+
     TIMEOUT_SECONDS = 5
 
     def authenticate(self, request):
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
-            return None  # DRF will treat as anonymous
+            return None
 
         token = auth_header.split(" ")[1]
         correlation_id = str(uuid.uuid4())
         reply_topic = f"validate_token_responses_{correlation_id}"
 
-        # Send token validation request to Auth service via Kafka
         producer = KafkaProducer(
             bootstrap_servers=KAFKA_BROKER,
             value_serializer=lambda v: json.dumps(v).encode("utf-8")
@@ -41,7 +41,7 @@ class AuthServiceTokenAuthentication(authentication.BaseAuthentication):
         })
         producer.flush()
 
-        # Consume the response from Auth service
+
         consumer = KafkaConsumer(
             reply_topic,
             bootstrap_servers=KAFKA_BROKER,
@@ -58,7 +58,7 @@ class AuthServiceTokenAuthentication(authentication.BaseAuthentication):
                     if resp.get("status") != "success":
                         raise exceptions.AuthenticationFailed(resp.get("message"))
 
-                    # Return a user-like object for DRF
+
                     user_data = resp
                     user = AuthUser(
                         user_id=user_data["user_id"],
